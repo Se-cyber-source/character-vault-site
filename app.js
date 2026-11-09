@@ -1,5 +1,3 @@
-Na początku pliku zastąp dotychczasową inicjalizację bazy poniższym kodem:
-
 const API_URL = "https://character-vault-api.seba-cieckiewicz.workers.dev/";
 
 const TOKEN_KEY = "characterVault_session";
@@ -389,23 +387,62 @@ function renderProjects() {
   }).join("");
 }
 
-function addProject() {
+async function addProject() {
   const name = $("projectName").value.trim();
+
   if (!name) return toast("Podaj nazwę projektu.");
 
-  db.projects.push({ id: crypto.randomUUID(), name });
-  $("projectName").value = "";
-  persist();
-  toast("Dodano folder.");
+  const project = {
+    id: crypto.randomUUID(),
+    name
+  };
+
+  db.projects.push(project);
+
+  try {
+    await saveProjects();
+    $("projectName").value = "";
+    await loadDatabase();
+    toast("Dodano folder.");
+  } catch (error) {
+    db.projects = db.projects.filter(p => p.id !== project.id);
+    toast(error.message);
+  }
 }
 
-function deleteProject(id) {
+async function deleteProject(id) {
   if (!confirm("Usunąć folder? Postacie zostaną zachowane.")) return;
+
+  const previousProjects = [...db.projects];
+  const previousBots = db.bots.map(b => ({ ...b }));
+
   db.projects = db.projects.filter(p => p.id !== id);
+
   db.bots.forEach(b => {
     if (b.project === id) b.project = "";
   });
-  persist();
+
+  try {
+    await saveProjects();
+
+    // Zapisz zmiany przypisania postaci do folderów
+    for (const bot of db.bots.filter(b =>
+      previousBots.find(old => old.id === b.id)?.project === id
+    )) {
+      await api("/characters", {
+        method: "PUT",
+        body: JSON.stringify(bot)
+      });
+    }
+
+    await loadDatabase();
+    toast("Usunięto folder.");
+  } catch (error) {
+    db.projects = previousProjects;
+    db.bots = previousBots;
+    render();
+    toast(error.message);
+  }
 }
 
 function showDetail(id) {
@@ -495,12 +532,22 @@ async function copyGreeting(id, index) {
   toast("Powitanie skopiowane!");
 }
 
-function deleteBot(id) {
+async function deleteBot(id) {
   if (!confirm("Czy na pewno usunąć tę postać?")) return;
-  db.bots = db.bots.filter(b => b.id !== id);
-  persist();
-  showPage("home");
-  toast("Usunięto postać.");
+
+  try {
+    await api(`/characters/${encodeURIComponent(id)}`, {
+      method: "DELETE"
+    });
+
+    await loadDatabase();
+
+    showPage("home");
+    toast("Usunięto postać.");
+
+  } catch (error) {
+    toast(error.message);
+  }
 }
 
 // Zdjęcia i kadrowanie
@@ -601,5 +648,31 @@ $("menuBtn").addEventListener("click", () => {
 
 $("characterForm").addEventListener("submit", e => e.preventDefault());
 
-render();
-showPage("home");
+
+async function initializeApp() {
+  $("loginForm").addEventListener("submit", e => {
+    e.preventDefault();
+    login();
+  });
+
+  if (!token) {
+    $("loginPage").classList.remove("hidden");
+    $("appContent").classList.add("hidden");
+    return;
+  }
+
+  try {
+    await loadDatabase();
+
+    $("loginPage").classList.add("hidden");
+    $("appContent").classList.remove("hidden");
+
+    showPage("home");
+
+  } catch (error) {
+    console.error(error);
+    logout(false);
+  }
+}
+
+initializeApp();
