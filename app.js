@@ -113,8 +113,6 @@ async function saveProjects() {
   });
 }
 
-const $ = id => document.getElementById(id);
-
 function persist() {
   try {
     localStorage.setItem(DB_KEY, JSON.stringify(db));
