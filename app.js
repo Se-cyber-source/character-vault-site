@@ -1,10 +1,119 @@
+Na początku pliku zastąp dotychczasową inicjalizację bazy poniższym kodem:
 
-const DB_KEY = "characterVault_v1";
+const API_URL = "https://character-vault-api.seba-cieckiewicz.workers.dev/";
 
-let db = JSON.parse(localStorage.getItem(DB_KEY) || '{"bots":[],"projects":[]}');
+const TOKEN_KEY = "characterVault_session";
+
+let token = localStorage.getItem(TOKEN_KEY) || "";
+
+let db = {
+  bots: [],
+  projects: []
+};
+
 let currentImage = "";
 let greetings = [];
 let currentPage = "home";
+
+const $ = id => document.getElementById(id);
+
+async function api(path, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers
+  };
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (response.status === 401) {
+    logout(false);
+    throw new Error("Sesja wygasła. Zaloguj się ponownie.");
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || "Błąd komunikacji z serwerem.");
+  }
+
+  return data;
+}
+
+// Logowanie
+async function login() {
+  const password = $("loginPassword").value;
+
+  if (!password) {
+    return toast("Wpisz hasło.");
+  }
+
+  try {
+    const result = await api("/login", {
+      method: "POST",
+      body: JSON.stringify({ password }),
+      headers: {}
+    });
+
+    token = result.token;
+    localStorage.setItem(TOKEN_KEY, token);
+
+    $("loginPassword").value = "";
+
+    await loadDatabase();
+
+    $("loginPage").classList.add("hidden");
+    $("appContent").classList.remove("hidden");
+
+    showPage("home");
+    toast("Zalogowano pomyślnie!");
+  } catch (error) {
+    toast(error.message);
+  }
+}
+
+// Wylogowanie
+async function logout(callServer = true) {
+  if (callServer && token) {
+    try {
+      await api("/logout", { method: "POST" });
+    } catch {}
+  }
+
+  token = "";
+  localStorage.removeItem(TOKEN_KEY);
+
+  db = { bots: [], projects: [] };
+
+  $("appContent")?.classList.add("hidden");
+  $("loginPage")?.classList.remove("hidden");
+}
+
+// Pobieranie całej biblioteki
+async function loadDatabase() {
+  const [characters, projects] = await Promise.all([
+    api("/characters"),
+    api("/projects")
+  ]);
+
+  db.bots = characters.bots || [];
+  db.projects = projects.projects || [];
+
+  render();
+}
+
+// Zapis projektów na GitHub
+async function saveProjects() {
+  await api("/projects", {
+    method: "PUT",
+    body: JSON.stringify({
+      projects: db.projects
+    })
+  });
+}
 
 const $ = id => document.getElementById(id);
 
@@ -152,8 +261,10 @@ function getCrop() {
   };
 }
 
-function saveCharacter() {
+
+async function saveCharacter() {
   const name = $("botName").value.trim();
+
   if (!name) return toast("Podaj nazwę postaci.");
 
   const id = $("botId").value;
@@ -171,25 +282,25 @@ function saveCharacter() {
     definition: $("botDefinition").value,
     notes: $("botNotes").value,
     greetings: greetings.filter(g => g.trim()),
-    image: currentImage,
+    image: currentImage || old?.image || "",
     ...crop,
     created: old?.created || new Date().toISOString(),
     updated: new Date().toISOString()
   };
 
-  if (old) {
-    db.bots = db.bots.map(b => b.id === id ? bot : b);
-  } else {
-    db.bots.unshift(bot);
-  }
-
   try {
-    localStorage.setItem(DB_KEY, JSON.stringify(db));
+    await api("/characters", {
+      method: old ? "PUT" : "POST",
+      body: JSON.stringify(bot)
+    });
+
+    await loadDatabase();
+
     toast("Postać została zapisana!");
-    render();
     showPage("home");
-  } catch {
-    toast("Nie udało się zapisać. Zmniejsz zdjęcie lub wyeksportuj dane.");
+
+  } catch (error) {
+    toast(error.message);
   }
 }
 
