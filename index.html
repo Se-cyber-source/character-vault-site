@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0b12">
+  <title>Character Vault</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#">
+      <span class="brand-icon">✦</span>
+      Character Vault
+    </a>
+
+    <button class="nav-item active" data-page="home">⌂ Dashboard</button>
+    <button class="nav-item" data-page="projects">▣ Projekty</button>
+    <button class="nav-item" data-page="editor">＋ Nowa postać</button>
+
+    <div class="side-label">BIBLIOTEKA</div>
+    <div id="projectNav"></div>
+
+    <div class="sidebar-bottom">
+      <button class="nav-item" id="exportBtn">↓ Eksport danych</button>
+      <button class="nav-item" id="importBtn">↑ Import danych</button>
+      <input type="file" id="importFile" accept=".json" hidden>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="mobile-menu" id="menuBtn">☰</button>
+      <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+      <button class="primary-btn" id="newBtn">＋ Nowa postać</button>
+    </header>
+
+    <section id="homePage" class="page">
+      <div class="hero">
+        <div>
+          <span class="eyebrow">YOUR PRIVATE CHARACTER LIBRARY</span>
+          <h1>Twoje postacie.<br><span>Twoje historie.</span></h1>
+          <p>Wszystkie boty i prompty w jednym miejscu.</p>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Postacie</span><strong id="botCount">0</strong></div>
+        <div class="stat"><span>Projekty</span><strong id="projectCount">0</strong></div>
+        <div class="stat"><span>Wiadomości powitalne</span><strong id="greetingCount">0</strong></div>
+      </div>
+
+      <div class="section-heading">
+        <div><h2>Twoja biblioteka</h2><p>Przeglądaj i zarządzaj postaciami.</p></div>
+      </div>
+
+      <div class="toolbar">
+        <input id="searchInput" placeholder="⌕ Szukaj postaci...">
+        <select id="projectFilter"><option value="">Wszystkie projekty</option></select>
+      </div>
+
+      <div id="characterGrid" class="character-grid"></div>
+      <div id="emptyState" class="empty hidden">
+        <span>✦</span>
+        <h2>Twoja biblioteka jest pusta</h2>
+        <p>Stwórz pierwszą postać i zachowaj jej historię.</p>
+        <button class="primary-btn" onclick="showEditor()">＋ Stwórz postać</button>
+      </div>
+    </section>
+
+    <section id="projectsPage" class="page hidden">
+      <h1>Projekty</h1>
+      <p>Organizuj swoje postacie w folderach.</p>
+      <div class="project-create">
+        <input id="projectName" placeholder="Nazwa nowego projektu">
+        <button class="primary-btn" id="addProjectBtn">＋ Dodaj folder</button>
+      </div>
+      <div id="projectGrid" class="project-grid"></div>
+    </section>
+
+    <section id="editorPage" class="page hidden">
+      <div class="editor-heading">
+        <div><span class="eyebrow">CHARACTER CREATOR</span>
+          <h1 id="editorTitle">Nowa postać</h1>
+          <p>Stwórz i zapisz nową postać AI.</p>
+        </div>
+        <button class="primary-btn" id="saveBtn">✓ Zapisz postać</button>
+      </div>
+
+      <form id="characterForm">
+        <input id="botId" type="hidden">
+
+        <div class="editor-layout">
+          <div class="editor-main">
+            <div class="panel">
+              <h3>Podstawowe informacje</h3>
+              <label>Nazwa postaci *</label>
+              <input id="botName" required maxlength="100" placeholder="Np. Luna">
+
+              <label>Short Description <span id="descCounter">0 / 500</span></label>
+              <textarea id="botDescription" maxlength="500" rows="3"
+                placeholder="Krótki opis postaci..."></textarea>
+
+              <label>Tagi</label>
+              <input id="botTags" placeholder="Fantasy, Romance, Adventure (oddziel przecinkami)">
+
+              <label>Folder projektu</label>
+              <select id="botProject"></select>
+
+              <label>Autor / notatka o autorze</label>
+              <input id="botAuthor" placeholder="Opcjonalnie">
+
+              <label>Status</label>
+              <select id="botStatus">
+                <option value="active">Aktywna</option>
+                <option value="draft">Szkic</option>
+                <option value="archived">Archiwum</option>
+              </select>
+            </div>
+
+            <div class="panel">
+              <div class="panel-heading">
+                <h3>Definition</h3>
+                <span id="definitionCounter">0 / 100 000</span>
+              </div>
+              <textarea id="botDefinition" maxlength="100000"
+                rows="15" placeholder="Wpisz tutaj pełną definicję swojej postaci..."></textarea>
+              <small>Możesz przechowywać tutaj osobowość, wygląd, historię, zasady zachowania i scenariusz.</small>
+            </div>
+
+            <div class="panel">
+              <div class="panel-heading">
+                <h3>Wiadomości powitalne</h3>
+                <button type="button" class="secondary-btn" id="addGreetingBtn">＋ Dodaj powitanie</button>
+              </div>
+              <p class="muted">Twórz różne początki historii dla tej samej postaci.</p>
+              <div id="greetingsList"></div>
+            </div>
+          </div>
+
+          <div class="editor-side">
+            <div class="panel">
+              <h3>Zdjęcie postaci</h3>
+              <div class="image-preview" id="imagePreview">
+                <span>✦<br>Podgląd zdjęcia</span>
+              </div>
+              <label>Adres URL zdjęcia</label>
+              <input id="imageUrl" type="url" placeholder="https://...">
+              <label class="upload-btn">
+                ↑ Wgraj z komputera
+                <input id="imageFile" type="file" accept="image/*" hidden>
+              </label>
+              <div class="crop-controls">
+                <label>Powiększenie</label>
+                <input type="range" id="imageZoom" min="100" max="300" value="100">
+                <label>Poziome przesunięcie</label>
+                <input type="range" id="imageX" min="0" max="100" value="50">
+                <label>Pionowe przesunięcie</label>
+                <input type="range" id="imageY" min="0" max="100" value="50">
+              </div>
+              <button type="button" class="secondary-btn full" id="resetCropBtn">Resetuj kadr</button>
+            </div>
+
+            <div class="panel">
+              <h3>Informacje dodatkowe</h3>
+              <label>Notatki prywatne</label>
+              <textarea id="botNotes" rows="5" placeholder="Pomysły, informacje, przypomnienia..."></textarea>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section id="detailPage" class="page hidden">
+      <div id="detailContent"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
