@@ -588,22 +588,46 @@ function exportData() {
   URL.revokeObjectURL(url);
 }
 
-function importData(file) {
+async function importData(file) {
   const reader = new FileReader();
-  reader.onload = () => {
+
+  reader.onload = async () => {
     try {
       const data = JSON.parse(reader.result);
+
       if (!Array.isArray(data.bots) || !Array.isArray(data.projects)) {
         throw new Error("Nieprawidłowy format");
       }
-      if (!confirm("Import zastąpi obecną bibliotekę. Kontynuować?")) return;
-      db = data;
-      persist();
+
+      if (!confirm("Import zastąpi obecną bibliotekę. Kontynuować?")) {
+        return;
+      }
+
+      // Najpierw zapisujemy projekty
+      await api("/projects", {
+        method: "PUT",
+        body: JSON.stringify({
+          projects: data.projects
+        })
+      });
+
+      // Następnie zapisujemy postacie
+      for (const bot of data.bots) {
+        await api("/characters", {
+          method: "POST",
+          body: JSON.stringify(bot)
+        });
+      }
+
+      await loadDatabase();
       toast("Zaimportowano bibliotekę.");
-    } catch {
-      toast("Nieprawidłowy plik kopii zapasowej.");
+
+    } catch (error) {
+      console.error(error);
+      toast("Błąd importu: " + error.message);
     }
   };
+
   reader.readAsText(file);
 }
 
