@@ -437,3 +437,61 @@ textarea { resize: vertical; line-height: 1.6; }
   font-size: 13px;
   min-height: 18px;
 }
+
+
+/* ===== LAYOUT FIX ===== */
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.app-shell {
+  display: flex;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+.sidebar {
+  flex: 0 0 245px;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  width: calc(100% - 245px);
+}
+
+.page {
+  width: 100%;
+  min-width: 0;
+}
+
+.editor-layout > * {
+  min-width: 0;
+}
+
+.editor-side {
+  min-width: 0;
+}
+
+.character-card img {
+  display: block;
+}
+
+@media (max-width: 850px) {
+  .sidebar {
+    position: fixed;
+    width: 245px;
+    flex: none;
+  }
+
+  .main {
+    width: 100%;
+  }
+}
+
