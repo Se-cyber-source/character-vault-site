@@ -1,4 +1,4 @@
-const API_URL = "https://character-vault-api.seba-cieckiewicz.workers.dev/";
+const API_URL = "https://character-vault-api.seba-cieckiewicz.workers.dev";
 
 const TOKEN_KEY = "characterVault_session";
 
@@ -111,15 +111,6 @@ async function saveProjects() {
       projects: db.projects
     })
   });
-}
-
-function persist() {
-  try {
-    localStorage.setItem(DB_KEY, JSON.stringify(db));
-    render();
-  } catch (error) {
-    toast("Brak miejsca na zapis. Wyeksportuj dane lub zmniejsz zdjęcie.");
-  }
 }
 
 function escapeHTML(value = "") {
