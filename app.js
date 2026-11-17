@@ -142,7 +142,7 @@ function showPage(page) {
     detail: "Szczegóły postaci"
   }[page] || page;
 
-  $("sidebar")?.classList.remove("open");
+  closeSidebar();
   window.scrollTo(0, 0);
 }
 
@@ -655,9 +655,6 @@ $("importBtn").addEventListener("click", () => $("importFile").click());
 $("importFile").addEventListener("change", e => {
   if (e.target.files[0]) importData(e.target.files[0]);
 });
-$("menuBtn").addEventListener("click", () => {
-  document.querySelector(".sidebar").classList.toggle("open");
-});
 
 $("characterForm").addEventListener("submit", e => e.preventDefault());
 
@@ -689,3 +686,42 @@ async function initializeApp() {
 }
 
 initializeApp();
+
+
+// Obsługa mobilnego menu
+const menuBtn = $("menuBtn");
+const sidebar = document.querySelector(".sidebar");
+const sidebarOverlay = $("sidebarOverlay");
+const sidebarClose = $("sidebarClose");
+
+function openSidebar() {
+  sidebar.classList.add("open");
+  sidebarOverlay.classList.add("active");
+}
+
+function closeSidebar() {
+  sidebar.classList.remove("open");
+  sidebarOverlay.classList.remove("active");
+}
+
+menuBtn.addEventListener("click", () => {
+  sidebar.classList.contains("open")
+    ? closeSidebar()
+    : openSidebar();
+});
+
+sidebarClose.addEventListener("click", closeSidebar);
+sidebarOverlay.addEventListener("click", closeSidebar);
+
+// Zamykanie menu po wybraniu zakładki lub folderu
+sidebar.addEventListener("click", e => {
+  if (e.target.closest(".nav-item")) {
+    closeSidebar();
+  }
+});
+
+// Zamykanie klawiszem Escape
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeSidebar();
+});
+
