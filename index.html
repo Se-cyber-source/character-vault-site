@@ -176,26 +176,82 @@
 
           <div class="editor-side">
             <div class="panel">
-              <h3>Zdjęcie postaci</h3>
-              <div class="image-preview" id="imagePreview">
-                <span>✦<br>Podgląd zdjęcia</span>
-              </div>
-              <label>Adres URL zdjęcia</label>
-              <input id="imageUrl" type="url" placeholder="https://...">
-              <label class="upload-btn">
-                ↑ Wgraj z komputera
-                <input id="imageFile" type="file" accept="image/*" hidden>
-              </label>
-              <div class="crop-controls">
-                <label>Powiększenie</label>
-                <input type="range" id="imageZoom" min="100" max="300" value="100">
-                <label>Poziome przesunięcie</label>
-                <input type="range" id="imageX" min="0" max="100" value="50">
-                <label>Pionowe przesunięcie</label>
-                <input type="range" id="imageY" min="0" max="100" value="50">
-              </div>
-              <button type="button" class="secondary-btn full" id="resetCropBtn">Resetuj kadr</button>
-            </div>
+  <h3>Zdjęcie postaci</h3>
+
+  <label for="imageMode">Sposób dodania zdjęcia</label>
+  <select id="imageMode">
+    <option value="upload">1. Wgraj z laptopa</option>
+    <option value="download">2. Pobierz z linku</option>
+    <option value="external">3. Wyświetl z linku</option>
+    <option value="default">4. Domyślny obrazek</option>
+  </select>
+
+  <div class="image-preview" id="imagePreview">
+    <span>✦<br>Podgląd zdjęcia</span>
+  </div>
+
+  <!-- OPCJA 1 -->
+  <div id="uploadImageOption">
+    <label class="upload-btn">
+      ↑ Wybierz zdjęcie z laptopa
+      <input
+        type="file"
+        id="imageFile"
+        accept="image/*"
+        hidden
+      >
+    </label>
+  </div>
+
+  <!-- OPCJA 2 -->
+  <div id="downloadImageOption" class="hidden">
+    <label for="downloadImageUrl">Link do pobrania zdjęcia</label>
+    <input
+      type="url"
+      id="downloadImageUrl"
+      placeholder="https://example.com/image.jpg"
+    >
+    <button type="button" class="secondary-btn full" id="downloadImageBtn">
+      ↓ Pobierz i zapisz zdjęcie
+    </button>
+  </div>
+
+  <!-- OPCJA 3 -->
+  <div id="externalImageOption" class="hidden">
+    <label for="externalImageUrl">Link do wyświetlenia zdjęcia</label>
+    <input
+      type="url"
+      id="externalImageUrl"
+      placeholder="https://example.com/image.jpg"
+    >
+    <button type="button" class="secondary-btn full" id="setExternalImageBtn">
+      Wyświetl zdjęcie
+    </button>
+  </div>
+
+  <!-- OPCJA 4 -->
+  <div id="defaultImageOption" class="hidden">
+    <p class="muted">
+      Postać będzie miała domyślny obrazek zamiast własnego zdjęcia.
+    </p>
+  </div>
+
+  <!-- KADROWANIE -->
+  <div class="crop-controls" id="cropControls">
+    <label>Powiększenie</label>
+    <input type="range" id="imageZoom" min="100" max="300" value="100">
+
+    <label>Poziome przesunięcie</label>
+    <input type="range" id="imageX" min="0" max="100" value="50">
+
+    <label>Pionowe przesunięcie</label>
+    <input type="range" id="imageY" min="0" max="100" value="50">
+  </div>
+
+  <button type="button" class="secondary-btn full" id="resetCropBtn">
+    Resetuj kadr
+  </button>
+</div>
 
             <div class="panel">
               <h3>Informacje dodatkowe</h3>
