@@ -75,19 +75,37 @@ async function login() {
 
 // Wylogowanie
 async function logout(callServer = true) {
-  if (callServer && token) {
-    try {
-      await api("/logout", { method: "POST" });
-    } catch {}
-  }
+  const oldToken = token;
 
+  // Natychmiast wyczyść lokalną sesję
   token = "";
   localStorage.removeItem(TOKEN_KEY);
 
-  db = { bots: [], projects: [] };
+  db = {
+    bots: [],
+    projects: []
+  };
 
-  $("appContent")?.classList.add("hidden");
-  $("loginPage")?.classList.remove("hidden");
+  currentImage = "";
+  greetings = [];
+
+  $("appContent").classList.add("hidden");
+  $("loginPage").classList.remove("hidden");
+
+  // Wylogowanie po stronie serwera
+  if (callServer && oldToken) {
+    try {
+      await fetch(`${API_URL}/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${oldToken}`
+        }
+      });
+    } catch (error) {
+      console.error("Błąd wylogowania z serwera:", error);
+    }
+  }
 }
 
 // Pobieranie całej biblioteki
