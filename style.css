@@ -483,15 +483,72 @@ body {
   display: block;
 }
 
+
+/* ===== MOBILE SIDEBAR FIX ===== */
+
+.sidebar-overlay {
+  display: none;
+}
+
+.sidebar-close {
+  display: none;
+}
+
 @media (max-width: 850px) {
   .sidebar {
     position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
     width: 245px;
+    max-width: 85vw;
+    height: 100vh;
+    height: 100dvh;
     flex: none;
+    z-index: 1001;
+    transform: translateX(-105%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    visibility: hidden;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(3px);
+  }
+
+  .sidebar-close {
+    display: block;
+    position: absolute;
+    top: 20px;
+    right: 15px;
+    z-index: 5;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: white;
+    font-size: 20px;
+  }
+
+  .brand {
+    padding-right: 40px;
   }
 
   .main {
     width: 100%;
+    margin-left: 0;
   }
 }
+
 
