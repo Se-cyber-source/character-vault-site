@@ -708,39 +708,61 @@ async function deleteBot(id) {
   }
 }
 
-// Zdjęcia i kadrowanie
+
+// OBSŁUGA 4 OPCJI ZDJĘĆ
+
+// 1. Wgrywanie zdjęcia z laptopa
 $("imageFile").addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
-  if (!file.type.startsWith("image/")) return toast("Wybierz plik graficzny.");
+
+  if (!file.type.startsWith("image/")) {
+    return toast("Wybierz plik graficzny.");
+  }
 
   if (file.size > 2 * 1024 * 1024) {
     return toast("Wybierz zdjęcie do 2 MB.");
   }
 
   const reader = new FileReader();
+
   reader.onload = () => {
     currentImage = reader.result;
+    imageMode = "upload";
+    $("imageMode").value = "upload";
     updateImagePreview();
+    toast("Zdjęcie wczytane!");
   };
+
+  reader.onerror = () => {
+    toast("Nie udało się odczytać zdjęcia.");
+  };
+
   reader.readAsDataURL(file);
 });
 
-$("imageUrl").addEventListener("change", () => {
-  const url = $("imageUrl").value.trim();
-  if (!url) return;
-  currentImage = url;
-  updateImagePreview();
+// 2. Pobieranie zdjęcia z linku
+$("downloadImageBtn").addEventListener("click", downloadImageFromUrl);
+
+// 3. Wyświetlanie zdjęcia z zewnętrznego linku
+$("setExternalImageBtn").addEventListener("click", setExternalImage);
+
+// 4. Zmiana sposobu dodawania zdjęcia
+$("imageMode").addEventListener("change", e => {
+  changeImageMode(e.target.value);
 });
 
-["imageZoom","imageX","imageY"].forEach(id => {
+// Kadrowanie zdjęcia
+["imageZoom", "imageX", "imageY"].forEach(id => {
   $(id).addEventListener("input", updateImagePreview);
 });
 
+// Resetowanie kadrowania
 $("resetCropBtn").addEventListener("click", () => {
   $("imageZoom").value = 100;
   $("imageX").value = 50;
   $("imageY").value = 50;
+
   updateImagePreview();
 });
 
