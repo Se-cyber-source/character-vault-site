@@ -655,6 +655,12 @@ $("importBtn").addEventListener("click", () => $("importFile").click());
 $("importFile").addEventListener("change", e => {
   if (e.target.files[0]) importData(e.target.files[0]);
 });
+$("logoutBtn").addEventListener("click", async () => {
+  if (!confirm("Czy na pewno chcesz się wylogować?")) return;
+
+  await logout(true);
+  toast("Wylogowano pomyślnie.");
+});
 
 $("characterForm").addEventListener("submit", e => e.preventDefault());
 
