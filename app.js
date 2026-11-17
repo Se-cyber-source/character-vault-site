@@ -217,7 +217,9 @@ function renderProjectOptions() {
       `<option value="${escapeHTML(p.id)}">${escapeHTML(p.name)}</option>`
     ).join("");
 
-  if (previous) select.value = previous;
+  if ([...select.options].some(option => option.value === previous)) {
+  select.value = previous;
+     }
 }
 
 function renderGreetings() {
