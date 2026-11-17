@@ -10,6 +10,7 @@ let db = {
 };
 
 let currentImage = "";
+let imageMode = "upload";
 let greetings = [];
 let currentPage = "home";
 
@@ -172,6 +173,11 @@ function showEditor(id = "") {
 
   const bot = db.bots.find(b => b.id === id);
 
+  imageMode = bot?.imageMode ||
+  (bot?.image
+    ? (bot.image.startsWith("data:") ? "upload" : "external")
+    : (bot ? "default" : "upload"));
+
   if (bot) {
     $("editorTitle").textContent = "Edytuj postać";
     $("botName").value = bot.name;
@@ -194,9 +200,29 @@ function showEditor(id = "") {
     $("imageY").value = 50;
   }
 
-  renderProjectOptions();
-  renderGreetings();
-  updateImagePreview();
+  $("imageMode").value = imageMode;
+
+$("downloadImageUrl").value = "";
+$("externalImageUrl").value = "";
+
+if (imageMode === "external" && bot?.image) {
+  $("externalImageUrl").value = bot.image;
+}
+
+if (imageMode === "download" && bot?.image) {
+  $("downloadImageUrl").value = "";
+}
+
+$("uploadImageOption").classList.toggle("hidden", imageMode !== "upload");
+$("downloadImageOption").classList.toggle("hidden", imageMode !== "download");
+$("externalImageOption").classList.toggle("hidden", imageMode !== "external");
+$("defaultImageOption").classList.toggle("hidden", imageMode !== "default");
+
+renderProjectOptions();
+renderGreetings();
+updateImagePreview();
+
+  
   updateCounters();
   showPage("editor");
 }
@@ -249,15 +275,135 @@ function removeGreeting(index) {
 
 function updateImagePreview() {
   const preview = $("imagePreview");
-  if (!currentImage) {
-    preview.innerHTML = "<span>✦<br>Podgląd zdjęcia</span>";
+  const cropControls = $("cropControls");
+
+  if (imageMode === "default" || !currentImage) {
+    preview.innerHTML = `
+      <div class="default-character-image">
+        <span>✦</span>
+        <small>Brak zdjęcia</small>
+      </div>
+    `;
+
+    if (cropControls) {
+      cropControls.classList.add("hidden");
+    }
+
     return;
   }
 
-  preview.innerHTML = `<img src="${escapeHTML(currentImage)}" alt="Podgląd">`;
+  if (cropControls) {
+    cropControls.classList.remove("hidden");
+  }
+
+  preview.innerHTML = `
+    <img src="${escapeHTML(currentImage)}" alt="Podgląd">
+  `;
+
   const img = preview.querySelector("img");
-  img.style.transform = `scale(${$("imageZoom").value / 100})`;
-  img.style.objectPosition = `${$("imageX").value}% ${$("imageY").value}%`;
+
+  img.style.transform =
+    `scale(${$("imageZoom").value / 100})`;
+
+  img.style.objectPosition =
+    `${$("imageX").value}% ${$("imageY").value}%`;
+}
+
+function changeImageMode(mode) {
+  imageMode = mode;
+
+  $("uploadImageOption").classList.toggle(
+    "hidden", mode !== "upload"
+  );
+
+  $("downloadImageOption").classList.toggle(
+    "hidden", mode !== "download"
+  );
+
+  $("externalImageOption").classList.toggle(
+    "hidden", mode !== "external"
+  );
+
+  $("defaultImageOption").classList.toggle(
+    "hidden", mode !== "default"
+  );
+
+  if (mode === "default") {
+    currentImage = "";
+  }
+
+  updateImagePreview();
+}
+
+async function downloadImageFromUrl() {
+  const url = $("downloadImageUrl").value.trim();
+
+  if (!url) {
+    return toast("Wklej adres zdjęcia.");
+  }
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Nie udało się pobrać zdjęcia.");
+    }
+
+    const blob = await response.blob();
+
+    if (!blob.type.startsWith("image/")) {
+      throw new Error("Podany link nie prowadzi do zdjęcia.");
+    }
+
+    if (blob.size > 2 * 1024 * 1024) {
+      throw new Error("Zdjęcie jest większe niż 2 MB.");
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      currentImage = reader.result;
+      updateImagePreview();
+      toast("Zdjęcie pobrane!");
+    };
+
+    reader.onerror = () => {
+      toast("Nie udało się odczytać zdjęcia.");
+    };
+
+    reader.readAsDataURL(blob);
+
+  } catch (error) {
+    toast(
+      error.name === "TypeError"
+        ? "Nie można pobrać zdjęcia. Serwer może blokować CORS."
+        : error.message
+    );
+  }
+}
+
+function setExternalImage() {
+  const url = $("externalImageUrl").value.trim();
+
+  if (!url) {
+    return toast("Wklej adres zdjęcia.");
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return toast("Nieprawidłowy adres zdjęcia.");
+    }
+
+    currentImage = url;
+    updateImagePreview();
+
+    toast("Ustawiono zdjęcie z linku!");
+
+  } catch {
+    toast("Nieprawidłowy adres URL.");
+  }
 }
 
 function getCrop() {
@@ -289,7 +435,10 @@ async function saveCharacter() {
     definition: $("botDefinition").value,
     notes: $("botNotes").value,
     greetings: greetings.filter(g => g.trim()),
-    image: currentImage || old?.image || "",
+    imageMode: imageMode,
+    image: imageMode === "default"
+      ? ""
+      : currentImage || old?.image || "",
     ...crop,
     created: old?.created || new Date().toISOString(),
     updated: new Date().toISOString()
